@@ -42,6 +42,7 @@ def save_aggregated_csv(agg: list[AggregatedResult], run_dir: Path):
         "model_name", "model_id", "provider", "task_id", "task_title",
         "num_runs", "num_successful", "num_failed",
         "latency_mean", "latency_stdev", "latency_min", "latency_max",
+        "input_tokens_mean", "input_tokens_stdev",
         "output_tokens_mean", "output_tokens_stdev",
         "response_length_mean", "response_length_stdev", "response_length_cv",
     ]

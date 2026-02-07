@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo create:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(unzip:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nBenchmark-System: Token-Tracking, Prompt v3.3, verbesserte Retry-Logik\n\nHauptänderungen:\n- Token-Schätzung und Kontextfenster-Warnungen im Dry-Run\n- Input-Token-Tracking in Results und CSV-Export\n- Prompts v3.3: A5 komplett überarbeitet \\(UK Turing Framework vs. EU AI Act\\)\n- Retry-Logik auf 3 Versuche mit exponentiellem Backoff erweitert\n- Sprachqualitäts-Schwelle im Scoring-Guide definiert\n- Projektdokumentation aktualisiert \\(Phase 2 abgeschlossen, Phase 3 läuft\\)\n- Utility-Scripts hinzugefügt \\(generate_extracts.py, merge_runs.py\\)\n\nHID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}

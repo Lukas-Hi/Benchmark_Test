@@ -22,7 +22,9 @@ Er richtet sich an Gerald (Erstbewertung) und potenzielle Community-Bewerter.
 
 ### 2.1 Substanz (Gewicht: 25%)
 
-Wie tief und eigenständig ist die Analyse?
+Wie breit und tief ist die Analyse? Substanz misst die **analytische Abdeckung**: Wie viele relevante Aspekte werden identifiziert, wie tief werden sie durchdacht, welche nicht-offensichtlichen Zusammenhänge werden hergestellt?
+
+Abgrenzung zu Urteilskraft: Wenn ein Modell einen versteckten Risikofaktor identifiziert → Substanz-Punkt. Wenn es dem GF sagt, seine Tendenz sei voreilig → Urteilskraft-Punkt. Substanz = Was wurde analysiert? Urteilskraft = Wie wurde Position bezogen?
 
 | Score | Beschreibung | Beispiel |
 |-------|-------------|----------|
@@ -58,7 +60,9 @@ Kann ein GF damit etwas anfangen?
 
 ### 2.4 Urteilskraft (Gewicht: 20%)
 
-Nickt das Modell alles ab oder traut es sich zu widersprechen?
+Hat das Modell Rückgrat? Urteilskraft misst die **Positionierung und Haltung**: Traut sich das Modell eine klare Empfehlung, widerspricht es dem Auftraggeber, benennt es Denkfehler ungefragt?
+
+Abgrenzung zu Substanz: Substanz = analytische Breite und Tiefe (was wird erkannt). Urteilskraft = Haltung gegenüber dem Auftraggeber (wie wird damit umgegangen). Ein Modell kann alle Risiken identifizieren (Substanz 5) aber trotzdem diplomatisch ausweichen (Urteilskraft 3).
 
 | Score | Beschreibung | Beispiel |
 |-------|-------------|----------|
@@ -138,12 +142,25 @@ Score = (Substanz × 0.25) + (Präzision × 0.25) +
         (Sprachqualität × 0.10)
 ```
 
-**Beispiel:**
+### Sprachqualität als Schwellenkriterium
+
+Sprachqualität < 3 → **Gesamtscore gedeckelt auf maximal 3,4** (Höchstens "Fleißiger Assistent").
+
+Begründung: Ein österreichischer GF akzeptiert kein Modell als Sparringspartner, das steifes Übersetzungsdeutsch liefert – unabhängig von der inhaltlichen Qualität. Sprachqualität ist in der Praxis ein K.O.-Kriterium. Die 10%-Gewichtung allein bildet das nicht ab. Die Schwelle korrigiert das.
+
+Anwendung: Zuerst Score normal berechnen. Dann prüfen: Ist Sprachqualität < 3? Falls ja: Score = min(Score, 3.4).
+
+**Beispiel 1 (normal):**
 Substanz 4, Präzision 3, Praxis 4, Urteil 5, Sprache 4
 = (4×0.25) + (3×0.25) + (4×0.20) + (5×0.20) + (4×0.10)
-= 1.00 + 0.75 + 0.80 + 1.00 + 0.40
-= **3,95**
+= 1.00 + 0.75 + 0.80 + 1.00 + 0.40 = **3,95**
 → Klasse: Qualifizierter Zuarbeiter
+
+**Beispiel 2 (Schwelle greift):**
+Substanz 4, Präzision 4, Praxis 4, Urteil 4, Sprache 2
+= (4×0.25) + (4×0.25) + (4×0.20) + (4×0.20) + (2×0.10)
+= 1.00 + 1.00 + 0.80 + 0.80 + 0.20 = 3,80 → **gedeckelt auf 3,40**
+→ Klasse: Fleißiger Assistent (trotz inhaltlich guter Leistung)
 
 ---
 

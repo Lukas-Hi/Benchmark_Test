@@ -69,8 +69,9 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 |---------|----------|--------|
 | A1, A3, A4 | – (Szenario im Prompt) | ✓ Fertig |
 | A2 | BCG AI Radar 2026 Executive Summary | ⬜ Zu beschaffen |
-| A5 | Statistik Austria ICT 2025 + Microsoft Work Trend Index 2025 | ⬜ Zu beschaffen |
-| A6 | Quartalsbericht (Unternehmen TBD) | ⬜ Zu beschaffen, Unternehmen festlegen |
+| A5_N | Alan Turing Framework (88S.) + EU AI Act (144S.) – volle PDFs | ✓ Fertig |
+| A5_P | Kuratierte Extrakte (~2.5k Tokens) aus beiden Dokumenten | ✓ Fertig |
+| A6 | EVN Geschäftsbericht 2024/25 | ✓ Fertig |
 
 ---
 
@@ -87,19 +88,38 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 - [x] Refactoring: Monolith (810Z) → 5 Module (benchmark.py 222Z, models.py 158Z, providers.py 329Z, output.py 181Z, prompts.py 313Z)
 - [x] Fixes: REQUEST_DELAY aus Semaphore verschoben, 1× Retry bei HTTP 429 eingebaut
 
-### Phase 2: Quelldokumente ⬜
-- [ ] BCG AI Radar 2026 PDF beschaffen und in `documents/` ablegen
-- [ ] Statistik Austria ICT-Erhebung 2024/2025 PDF beschaffen
-- [ ] Microsoft Work Trend Index 2025 PDF beschaffen
-- [ ] Quartalsbericht: Unternehmen auswählen (Vorschlag: Immofinanz, CA Immo, oder Verbund)
-- [ ] Quartalsbericht PDF beschaffen
+### Phase 2: Quelldokumente ✓
+- [x] BCG AI Radar 2026 → `documents/pdf_files/ai-radar-2026-web-jan-2026-edit.pdf`
+- [x] Alan Turing AI Regulatory Framework → `documents/pdf_files/alan_turing_the_ai_regulatory.pdf`
+- [x] EU AI Act (deutsch, 144S.) → `documents/pdf_files/EU_AI_ACT_DE_TXT.pdf`
+- [x] EVN Geschäftsbericht 2024/25 → `documents/pdf_files/EVN-GHB-2024-25_online.pdf`
+- [x] Kuratierte Extrakte für A5 → `documents/extracts/` (EU_AI_ACT_Art4_extract.txt, turing_framework_extract.txt)
+- [x] `generate_extracts.py` erstellt → MUSS EINMAL AUSGEFÜHRT WERDEN: `cd Benchmark_Test && python generate_extracts.py`
+- [x] Chunk-Strategie implementiert: Beide A5-Varianten nutzen Extrakte (~4.4k Tokens statt ~108k)
+- [x] prompts.py v3.2: Alle doc-Referenzen auf tatsächliche Dateinamen aktualisiert
+- [x] Skill entpackt → `skills/benchmark-specs/` (SKILL.md, references/, benchmark.py, prompts.py Snapshot)
+- [x] `generate_extracts.py` ausgeführt: EU-Extrakt 1.277 Wörter, Turing-Extrakt 2.533 Wörter, ~4.446 Tokens gesamt
+- [x] Skill `benchmark-evaluator` erstellt (SKILL.md + references/scoring_criteria.md + references/methodology_references.md)
+- [x] Skill `benchmark-specs` aktualisiert (Phase 2 DONE, Refactoring-Status, Verweis auf Evaluator)
+- [-] Statistik Austria / Microsoft Work Trend Index → nicht mehr benötigt (A5 umdesignt auf UK vs. EU Regulierung)
+- [x] A5 Dual-Input-Design: N-Variante nutzt volle PDFs (~108k Tokens), P-Variante nutzt kuratierte Extrakte (~4.4k Tokens)
+- [x] Retry auf 3 mit exponentiellem Backoff (10s/30s/90s), auch HTTP 503/529
+- [x] Dry-Run um Token-Schätzung und Kontextfenster-Warnungen erweitert
+- [x] Input-Tokens in AggregatedResult und aggregated_stats.csv aufgenommen
+- [x] merge_runs.py erstellt: Führt separate run_*-Verzeichnisse zusammen
 
-### Phase 3: Testdurchlauf ⬜
-- [ ] `.env` mit API-Keys konfigurieren
-- [ ] `python benchmark.py --dry-run` – Provider-Zuordnung prüfen
-- [ ] `python benchmark.py --runs 1 --models "Claude Opus 4.6,GPT-5.2" --tasks A1` – Testlauf
-- [ ] Ergebnis prüfen: Antworten vorhanden, Statistik plausibel
-- [ ] Fehlerbehandlung testen: Was passiert bei Timeout, falschem Key, fehlendem Dokument
+### Phase 3: Testdurchlauf 🟡 IN PROGRESS
+- [x] `.env` mit API-Keys konfiguriert
+- [x] `python benchmark.py --dry-run` – Token-Schätzungen validiert:
+  - A5_N: 128.350 Tokens (volle PDFs) – grenzwertig für 128k-Modelle
+  - A6_N/P: ~168k Tokens (voller EVN-Bericht) – überschreitet 128k-Modelle
+- [x] Smoke Test: Claude Opus 4.6 × A1_N – erfolgreich (1.351 Tokens, 30s)
+- [x] System-Prompt-Test: Claude Opus 4.6 × A1_P – Fließtext, Deutsch, keine KI-Referenz ✓
+- [ ] o1 System-Prompt-Kompatibilität prüfen (wenn erste P-Ergebnisse vorliegen)
+- [x] Google Gemini Flash × A6: HTTP 429 Quota-Problem. Google-Modelle auf separaten Run verschoben.
+- [x] Hauptlauf gestartet: 9 Modelle (Anthropic + OpenAI), 12 Tasks × 10 Runs = 1.080 Requests
+- [ ] Google-Run nachholen (3 Modelle), dann merge_runs.py
+- [ ] Ergebnisse prüfen: Antworten, Statistik, Fehler-Report
 
 ### Phase 4: Voller Durchlauf ⬜
 - [ ] `python benchmark.py` – 18 Modelle × 12 Aufgaben × 10 Runs

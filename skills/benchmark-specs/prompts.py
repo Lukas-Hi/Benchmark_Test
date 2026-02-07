@@ -1,5 +1,5 @@
 """
-Entscheider-Benchmark: Prompt-Definitionen v3.2
+Entscheider-Benchmark: Prompt-Definitionen v3.0
 HID-LINKEDIN-BENCHMARK-PROMPTS-2026-02-06-ACTIVE-D9F2C3-CLO46
 © Gerald Pögl – Hunter-ID MemoryBlock BG FlexCo
 
@@ -11,22 +11,6 @@ Die Power-User-Variante nutzt den SYSTEM_PROMPT.
 Die Normal-User-Variante nutzt KEINEN System-Prompt – nur die nackte Frage.
 
 Importiert von benchmark.py.
-
-Änderungshistorie:
-  v3.0 → v3.1: A5 (Widerspruchserkennung) komplett überarbeitet.
-    Alte Quellen: Statistik Austria ICT 2025 + Microsoft Work Trend Index 2025
-    Neue Quellen: Alan Turing AI Regulatory Framework + EU AI Act (Art. 4)
-    Begründung: Regulierungsphilosophie UK vs. EU ergibt substanziellere
-    Widersprüche und höheren Benchmark-Anspruch.
-  v3.1 → v3.2: Chunk-Strategie für A5 implementiert.
-    Beide Varianten auf Extrakte gesetzt (Zwischenstand).
-  v3.2 → v3.3: A5 Dual-Input-Design finalisiert.
-    N-Variante: Volle PDFs (88+144 Seiten, ~108k Tokens) – simuliert Normal-User
-    der alles reinwirft ohne Vorbereitung.
-    P-Variante: Kuratierte Extrakte (~4.4k Tokens) – simuliert Power-User
-    der Chunking/Fokussierung als Vorbereitung macht.
-    Kategorie aktualisiert: "Quellenvergleich und regulatorische Einordnung".
-    Measures A5_P: Substanz > Urteilskraft > Präzision (Substanz primär).
 """
 
 # ============================================
@@ -112,7 +96,7 @@ Viertens: Gib eine Einschätzung, ob die Grundtendenz des Geschäftsführers nac
         "title": "Strategische Zusammenfassung (Normal)",
         "variant": "N",
         "category": "Informationsverdichtung für Führungsentscheidungen",
-        "docs": ["pdf_files/ai-radar-2026-web-jan-2026-edit.pdf"],
+        "docs": ["bcg_ai_radar_2026.pdf"],
         "measures": ["Substanz", "Präzision", "Praxistauglichkeit"],
         "use_system_prompt": False,
         "prompt": """Ich bin Geschäftsführer eines Handelsunternehmens in Österreich, 60 Mitarbeiter. Wir haben noch keine KI-Strategie. Kannst du mir den beigefügten Bericht zusammenfassen? Was davon ist für mich relevant und was kann ich ignorieren?""",
@@ -122,7 +106,7 @@ Viertens: Gib eine Einschätzung, ob die Grundtendenz des Geschäftsführers nac
         "title": "Strategische Zusammenfassung (Power)",
         "variant": "P",
         "category": "Informationsverdichtung für Führungsentscheidungen",
-        "docs": ["pdf_files/ai-radar-2026-web-jan-2026-edit.pdf"],
+        "docs": ["bcg_ai_radar_2026.pdf"],
         "measures": ["Substanz", "Präzision", "Praxistauglichkeit"],
         "use_system_prompt": True,
         "prompt": """KONTEXT:
@@ -246,54 +230,47 @@ Mache deine Annahmen explizit. Verkaufe keine Einschätzung als Prognose.""",
 
     # ══════════════════════════════════════════
     # AUFGABE 5: Widerspruchserkennung
-    # Quellen: UK Turing Framework vs. EU AI Act
-    # N = Volle PDFs (Normal-User wirft alles rein)
-    # P = Kuratierte Extrakte (Power-User chunked)
     # ══════════════════════════════════════════
 
     "A5_Widerspruchserkennung_N": {
         "title": "Widerspruchserkennung (Normal)",
         "variant": "N",
-        "category": "Quellenvergleich und regulatorische Einordnung",
-        "docs": ["pdf_files/alan_turing_the_ai_regulatory.pdf", "pdf_files/EU_AI_ACT_DE_TXT.pdf"],
+        "category": "Quellenvalidierung und kritische Analyse",
+        "docs": ["statistik_austria_ict_2025.pdf", "microsoft_work_trend_index_2025.pdf"],
         "measures": ["Präzision", "Urteilskraft", "Substanz"],
         "use_system_prompt": False,
-        "prompt": """Ich hab hier zwei Dokumente zum Thema KI-Regulierung. Das eine ist ein Framework vom Alan Turing Institute aus Großbritannien, das andere ist der EU AI Act.
+        "prompt": """Ich hab hier zwei Berichte zum Thema KI-Nutzung in Unternehmen. Der eine ist von der Statistik Austria, der andere von Microsoft.
 
-Mich interessiert: Widersprechen sich die beiden Ansätze? Und was davon betrifft mich als Geschäftsführer eines Unternehmens mit 30 Leuten in Österreich konkret?""",
+Widersprechen sich die beiden? Und wenn ja, wem soll ich eher glauben?""",
     },
 
     "A5_Widerspruchserkennung_P": {
         "title": "Widerspruchserkennung (Power)",
         "variant": "P",
-        "category": "Quellenvergleich und regulatorische Einordnung",
-        "docs": ["extracts/turing_framework_extract.txt", "extracts/EU_AI_ACT_Art4_extract.txt"],
-        "measures": ["Substanz", "Urteilskraft", "Präzision"],
+        "category": "Quellenvalidierung und kritische Analyse",
+        "docs": ["statistik_austria_ict_2025.pdf", "microsoft_work_trend_index_2025.pdf"],
+        "measures": ["Präzision", "Urteilskraft", "Substanz"],
         "use_system_prompt": True,
         "prompt": """KONTEXT:
-Du berätst den Geschäftsführer eines österreichischen KMU mit 30 Mitarbeitern. Das Unternehmen setzt KI-Tools im Tagesgeschäft ein (ChatGPT, Copilot, KI-gestützte Angebotserstellung). Der Geschäftsführer will verstehen, welche regulatorischen Anforderungen auf ihn zukommen – und wie unterschiedlich das Thema international betrachtet wird.
+Du bereitest für eine Geschäftsführerin eine Entscheidungsgrundlage zum Thema KI-Nutzung in Unternehmen vor. Sie will verstehen, wie verbreitet KI tatsächlich ist – nicht was die Marketingabteilungen der Anbieter behaupten.
 
 DOKUMENTE:
-Dir liegen zwei Dokumente vor, die oben beigefügt sind.
-
-Dokument 1: "The AI Regulatory Capability Framework and Self-Assessment Tool" vom Alan Turing Institute, erstellt mit dem britischen Department for Science, Innovation and Technology. Ein Framework für KI-Regulierungskompetenz mit 28 regulatorischen Aktivitäten, 6 Capability Factors und 17 Capability Statements.
-
-Dokument 2: Die EU-Verordnung 2024/1689 (EU AI Act), insbesondere Artikel 4 zur KI-Kompetenz. In Kraft seit 2. Februar 2025, Durchsetzung ab 2. August 2026.
+Dir liegen zwei Berichte vor, die oben beigefügt sind. Beide behandeln das Thema KI-Nutzung in Unternehmen, kommen aber aus unterschiedlichen Quellen.
 
 DEIN AUFTRAG:
-Analysiere beide Dokumente im Vergleich. Konkret:
+Analysiere beide Berichte im Vergleich. Konkret:
 
-Erstens: Welchen Regulierungsansatz verfolgt das UK-Framework und welchen der EU AI Act? Beschreibe die grundlegenden Unterschiede in Philosophie, Adressat und Verbindlichkeit.
+Erstens: Welche zentralen Aussagen machen die beiden Berichte zum Verbreitungsgrad von KI in Unternehmen? Nenne die konkreten Zahlen.
 
-Zweitens: Wo widersprechen sich die Ansätze? Identifiziere konkrete Divergenzen, nicht nur unterschiedliche Schwerpunkte. Beispiele: Was der EU AI Act als Pflicht formuliert, behandelt das UK-Framework als freiwillige Capability. Was das Turing-Framework als komplexen Prozess mit 28 Aktivitäten und 17 Capability Statements beschreibt, reduziert der EU AI Act auf einen einzigen Artikel. Wo das UK dezentral und sektorspezifisch reguliert, schafft die EU einen horizontalen Rahmen.
+Zweitens: Widersprechen sich die Berichte? Wenn ja, wo genau und wie gravierend? Wenn die Zahlen stark voneinander abweichen, benenne das klar mit den konkreten Werten.
 
-Drittens: Was bedeuten diese Unterschiede für den Geschäftsführer konkret? Er operiert unter EU-Recht, nicht unter UK-Recht. Aber: Kann er aus dem UK-Framework trotzdem etwas lernen? Wenn ja, was? Wenn nein, warum nicht?
+Drittens: Wie erklärst du dir die Unterschiede? Untersuche systematisch: Unterschiedliche Definitionen von „KI-Nutzung". Unterschiedliche Stichproben (Unternehmensgröße, Branche, Region). Unterschiedliche Erhebungsmethoden (amtliche Statistik vs. Befragung). Unterschiedlicher Erhebungszeitraum. Unterschiedliche Interessen der Herausgeber.
 
-Viertens: Was muss der Geschäftsführer bis August 2026 nachweisbar umgesetzt haben, um Artikel 4 EU AI Act zu erfüllen? Sei dabei so konkret wie der Gesetzestext es erlaubt – und benenne ehrlich, wo der Text vage bleibt und Interpretation erfordert.
+Viertens: Welcher Quelle würdest du für die Entscheidungsgrundlage mehr Gewicht geben – und warum? Wenn keine eindeutig verlässlicher ist, sag das.
 
-Fünftens: Welcher der beiden Ansätze ist für ein KMU mit 30 Mitarbeitern praxistauglicher? Begründe das.
+Fünftens: Was bedeutet diese Diskrepanz für die Geschäftsführerin konkret? Was sollte sie mitnehmen, wenn sie KI-Verbreitungszahlen liest?
 
-Erfinde keine Inhalte, die nicht in den Dokumenten stehen. Wenn ein Dokument eine Information nicht enthält, schreib das. Wenn der EU AI Act bewusst unspezifisch bleibt, benenne das als regulatorische Lücke.""",
+Erfinde keine Inhalte, die nicht in den Dokumenten stehen. Wenn ein Dokument eine Information nicht enthält, schreib das.""",
     },
 
     # ══════════════════════════════════════════
@@ -304,7 +281,7 @@ Erfinde keine Inhalte, die nicht in den Dokumenten stehen. Wenn ein Dokument ein
         "title": "Zahlenanalyse (Normal)",
         "variant": "N",
         "category": "Finanzanalyse und datengestützte Strategiebewertung",
-        "docs": ["pdf_files/EVN-GHB-2024-25_online.pdf"],
+        "docs": ["quartalsbericht.pdf"],
         "measures": ["Präzision", "Substanz", "Urteilskraft"],
         "use_system_prompt": False,
         "prompt": """Ich überlege mir eine Beteiligung an diesem Unternehmen. Kannst du dir den Quartalsbericht anschauen und mir sagen ob die Zahlen gut aussehen oder ob es Warnsignale gibt?""",
@@ -314,7 +291,7 @@ Erfinde keine Inhalte, die nicht in den Dokumenten stehen. Wenn ein Dokument ein
         "title": "Zahlenanalyse (Power)",
         "variant": "P",
         "category": "Finanzanalyse und datengestützte Strategiebewertung",
-        "docs": ["pdf_files/EVN-GHB-2024-25_online.pdf"],
+        "docs": ["quartalsbericht.pdf"],
         "measures": ["Präzision", "Substanz", "Urteilskraft"],
         "use_system_prompt": True,
         "prompt": """KONTEXT:
