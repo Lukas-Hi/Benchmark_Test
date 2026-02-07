@@ -34,7 +34,11 @@ Benchmark_Test/
 │   ├── specs.md           ← Technische Spezifikation
 │   ├── methodology.md     ← Wissenschaftliche Methodik
 │   └── scoring_guide.md   ← Anleitung für manuelle Bewertung
-├── documents/             ← Quelldokumente für Aufgaben A2, A5, A6
+├── documents/
+│   ├── pdf_files/         ← Volle PDFs (BCG, Turing, EU AI Act, EVN)
+│   ├── extracts/          ← Kuratierte Auszüge für A5_P (Chunk-Strategie)
+│   └── md_files/          ← Markdown-Versionen
+├── skills/benchmark-specs/ ← Entpackter Skill (SKILL.md, references/)
 │   ├── bcg_ai_radar_2026.pdf
 │   ├── statistik_austria_ict_2025.pdf
 │   ├── microsoft_work_trend_index_2025.pdf

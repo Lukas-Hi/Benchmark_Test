@@ -75,6 +75,8 @@ class AggregatedResult:
     latency_stdev: float = 0.0
     latency_min: float = 0.0
     latency_max: float = 0.0
+    input_tokens_mean: float = 0.0
+    input_tokens_stdev: float = 0.0
     output_tokens_mean: float = 0.0
     output_tokens_stdev: float = 0.0
     response_length_mean: float = 0.0
@@ -141,6 +143,7 @@ def aggregate_results(results: list[SingleResult]) -> list[AggregatedResult]:
     for (model_name, task_id), group in sorted(groups.items()):
         ok = [r for r in group if not r.error]
         lat = calc_stats([r.latency_seconds for r in ok])
+        itok = calc_stats([float(r.input_tokens) for r in ok])
         tok = calc_stats([float(r.output_tokens) for r in ok])
         rlen = calc_stats([float(len(r.response)) for r in ok])
         aggregated.append(AggregatedResult(
@@ -151,6 +154,7 @@ def aggregate_results(results: list[SingleResult]) -> list[AggregatedResult]:
             num_failed=len(group) - len(ok),
             latency_mean=lat["mean"], latency_stdev=lat["stdev"],
             latency_min=lat["min"], latency_max=lat["max"],
+            input_tokens_mean=itok["mean"], input_tokens_stdev=itok["stdev"],
             output_tokens_mean=tok["mean"], output_tokens_stdev=tok["stdev"],
             response_length_mean=rlen["mean"], response_length_stdev=rlen["stdev"],
             response_length_cv=rlen["cv"],

@@ -126,16 +126,44 @@ async def run_benchmark(models, tasks, num_runs, dry_run=False):
         for name, cfg in routed_models.items():
             key_ok = "✓" if OPENROUTER_KEY else "✗ Key fehlt"
             log.info(f"  {name} → {cfg['model_id']} [{key_ok}]")
-        log.info("\nAufgaben:")
+
+        # Token-Schätzung pro Aufgabe
+        log.info("\nAufgaben + Token-Schätzung:")
+        total_input_tokens_est = 0
         for tid, t in tasks.items():
             docs_ok = all((DOCS_DIR / d).exists() for d in t["docs"]) if t["docs"] else True
-            log.info(f"  {tid}: {t['title']} [{'✓' if docs_ok else '⚠ Docs fehlen'}]")
+            content = build_user_content(t)
+            token_est = int(len(content.split()) * 1.3)  # grobe Schätzung
+            total_input_tokens_est += token_est
+            # Kontextfenster-Warnung
+            warn = ""
+            if token_est > 100_000:
+                warn = " ⚠ >100k Tokens – Llama 3.3/Flash evtl. zu groß"
+            elif token_est > 50_000:
+                warn = " ⚠ >50k Tokens – große Kontextlast"
+            log.info(f"  {tid}: {t['title']} [{'✓' if docs_ok else '⚠ Docs fehlen'}] "
+                     f"~{token_est:,} Input-Tokens{warn}")
 
         direct_requests = len(direct_models) * len(tasks) * num_runs
         routed_requests = len(routed_models) * len(tasks) * num_runs
+        total_requests = direct_requests + routed_requests
+
+        # Geschätzte Gesamtkosten (Input + Output)
+        est_output_tokens = 800  # ~600 Wörter Durchschnitt
+        total_tokens_per_run = sum(
+            int(len(build_user_content(t).split()) * 1.3) + est_output_tokens
+            for t in tasks.values()
+        )
+        total_tokens_all = total_tokens_per_run * len(models) * num_runs
+
+        log.info(f"\nToken-Budget (geschätzt):")
+        log.info(f"  Input pro Durchlauf (alle Aufgaben): ~{total_input_tokens_est:,} Tokens")
+        log.info(f"  Total (alle Modelle × Runs): ~{total_tokens_all:,} Tokens")
         log.info(f"\nDirekt-API: {direct_requests} Requests (Abo, keine Zusatzkosten)")
-        log.info(f"OpenRouter: {routed_requests} Requests "
-                 f"(geschätzt {routed_requests * 0.08:.0f}–{routed_requests * 0.15:.0f} EUR)")
+        log.info(f"OpenRouter: {routed_requests} Requests")
+        log.info(f"  Geschätzte OpenRouter-Kosten: "
+                 f"{routed_requests * total_tokens_per_run * 0.000003:.0f}–"
+                 f"{routed_requests * total_tokens_per_run * 0.000010:.0f} EUR")
         return
 
     available_keys = [k for k, v in KEY_MAP.items() if v]

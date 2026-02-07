@@ -144,8 +144,8 @@ KEY_MAP = {
 }
 
 # Max retries on HTTP 429 (rate limit)
-MAX_RETRIES = 1
-RETRY_DELAY = 10  # seconds
+MAX_RETRIES = 3
+RETRY_BASE_DELAY = 10  # seconds, exponential: 10s, 30s, 60s
 
 
 def resolve_provider(model_cfg: dict) -> tuple[str, str, str]:
@@ -170,13 +170,19 @@ def resolve_provider(model_cfg: dict) -> tuple[str, str, str]:
 # ============================================
 
 async def _call_with_retry(coro_factory, retries=MAX_RETRIES):
-    """Wrap an API call with retry on HTTP 429."""
+    """Wrap an API call with retry on HTTP 429/529 (rate limit / overloaded).
+    Exponential backoff: 10s, 30s, 60s."""
+    result, error = None, None
     for attempt in range(retries + 1):
         result, error = await coro_factory()
-        if error and "HTTP 429" in str(error) and attempt < retries:
-            log.warning(f"  Rate-limited, retry in {RETRY_DELAY}s (attempt {attempt + 1})")
-            await asyncio.sleep(RETRY_DELAY)
-            continue
+        if error and attempt < retries:
+            status_str = str(error)
+            if "HTTP 429" in status_str or "HTTP 529" in status_str or "HTTP 503" in status_str:
+                delay = RETRY_BASE_DELAY * (3 ** attempt)  # 10, 30, 90
+                delay = min(delay, 90)  # cap at 90s
+                log.warning(f"  Rate-limited/overloaded, retry in {delay}s (attempt {attempt + 1}/{retries})")
+                await asyncio.sleep(delay)
+                continue
         return result, error
     return result, error
 
