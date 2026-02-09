@@ -101,4 +101,4 @@ Smoke Tests erfolgreich (Claude Opus 4.6 × A1). Hauptlauf gestartet aber Status
 6. Google-Modelle separat nachholen
 
 ### Prompt für nächsten Chat:
-"Benchmark weiter. Lies HUNTER_ID_STATUS.md als Einstieg. HID: HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46. Wichtig: generate_extracts.py wurde erweitert (EVN-Extrakt für A6_P). Nächster Schritt: Dry-Run + Hauptlauf."
+"Benchmark weiter. Lies  Wichtig: generate_extracts.py wurde erweitert (EVN-Extrakt für A6_P). Nächster Schritt: Dry-Run + Hauptlauf."
