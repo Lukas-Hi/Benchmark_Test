@@ -144,7 +144,7 @@ Je mehr unabhängige Bewertungen, desto belastbarer die Ergebnisse.
 - **Keine Kosten-Normalisierung:** Ein Modell mit 10× höherem Preis und 5% besserem Score ist nicht automatisch die bessere Wahl.
 
 ## Lizenz
-
+ACHTUNG: Das ist ein Testprojekt im Prototypstatus. Erste Outputs zu Anthropic gibt es bereits.
 MIT – verwenden, forken, erweitern.
 
 ## Referenzen
