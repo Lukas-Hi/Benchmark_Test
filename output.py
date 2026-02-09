@@ -6,7 +6,10 @@ HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46
 """
 
 import csv
+import sys
 import json
+import platform
+import subprocess
 from pathlib import Path
 from datetime import datetime, timezone
 from statistics import mean
@@ -14,7 +17,7 @@ from statistics import mean
 from models import (
     SingleResult, AggregatedResult,
     NUM_RUNS, TEMPERATURE, MAX_TOKENS, MAX_CONCURRENT,
-    calc_stats,
+    calc_stats, hash_string,
 )
 
 
@@ -33,6 +36,72 @@ def save_single_responses(results: list[SingleResult], run_dir: Path):
             f"**Fehler:** {r.error or '–'}\n\n---\n\n{r.response}\n",
             encoding="utf-8",
         )
+
+
+def save_prompt_archive(results: list[SingleResult], run_dir: Path, system_prompt: str):
+    """Save the exact prompt sent for each request (audit trail)."""
+    for r in results:
+        slug = r.model_name.replace(" ", "_").replace(".", "-")
+        d = run_dir / "responses" / slug
+        d.mkdir(parents=True, exist_ok=True)
+
+        sys_section = ""
+        if r.use_system_prompt:
+            sys_section = f"\n---\n## System-Prompt\n\n{system_prompt}\n"
+
+        (d / f"{r.task_id}_run{r.run_number:02d}_prompt.md").write_text(
+            f"# Prompt: {r.task_title} – Run {r.run_number}\n"
+            f"**Modell:** {r.model_name} (`{r.model_id}`) via {r.provider}\n"
+            f"**System-Prompt:** {'Ja' if r.use_system_prompt else 'Nein'}\n"
+            f"**Zeitpunkt:** {r.timestamp}\n"
+            f"**Prompt-Hash (SHA-256):** {hash_string(r.user_content)}\n"
+            f"{sys_section}"
+            f"\n---\n## User-Prompt\n\n{r.user_content}\n",
+            encoding="utf-8",
+        )
+
+
+def save_raw_responses(results: list[SingleResult], run_dir: Path):
+    """Save raw API JSON responses (audit trail)."""
+    for r in results:
+        if not r.raw_response:
+            continue
+        slug = r.model_name.replace(" ", "_").replace(".", "-")
+        d = run_dir / "responses" / slug
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"{r.task_id}_run{r.run_number:02d}_raw.json").write_text(
+            r.raw_response, encoding="utf-8",
+        )
+
+
+def get_git_info() -> dict:
+    """Capture git commit hash and dirty state."""
+    try:
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        dirty = bool(subprocess.check_output(
+            ["git", "status", "--porcelain"], text=True, stderr=subprocess.DEVNULL
+        ).strip())
+        return {"commit": commit, "dirty": dirty}
+    except Exception:
+        return {"commit": "unknown", "dirty": False}
+
+
+def get_environment() -> dict:
+    """Capture runtime environment for reproducibility."""
+    try:
+        packages = subprocess.check_output(
+            [sys.executable, "-m", "pip", "freeze"],
+            text=True, stderr=subprocess.DEVNULL
+        ).strip().split("\n")
+    except Exception:
+        packages = []
+    return {
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "packages": packages,
+    }
 
 
 def save_aggregated_csv(agg: list[AggregatedResult], run_dir: Path):
@@ -156,11 +225,15 @@ def save_provider_summary(results: list[SingleResult], run_dir: Path):
     (run_dir / "provider_summary.md").write_text("\n".join(lines), encoding="utf-8")
 
 
-def save_run_meta(results: list[SingleResult], run_dir: Path, elapsed: float):
-    """Save run metadata as JSON."""
+def save_run_meta(
+    results: list[SingleResult], run_dir: Path, elapsed: float,
+    document_checksums: dict | None = None,
+    prompt_hashes: dict | None = None,
+):
+    """Save run metadata as JSON with full audit trail."""
     ok = [r for r in results if not r.error]
     meta = {
-        "benchmark": "Entscheider-Benchmark v2.0",
+        "benchmark": "Entscheider-Benchmark v3.0",
         "hid": "HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "config": {
@@ -168,15 +241,22 @@ def save_run_meta(results: list[SingleResult], run_dir: Path, elapsed: float):
             "num_runs": NUM_RUNS, "max_concurrent": MAX_CONCURRENT,
         },
         "providers_used": list(set(r.provider for r in ok)),
-        "models": list(set(r.model_name for r in results)),
-        "tasks": list(set(r.task_id for r in results)),
+        "models": sorted(set(r.model_name for r in results)),
+        "tasks": sorted(set(r.task_id for r in results)),
         "stats": {
             "total_requests": len(results), "successful": len(ok),
             "failed": len(results) - len(ok),
             "total_tokens": sum(r.total_tokens for r in ok),
             "wall_clock_seconds": round(elapsed, 1),
         },
+        # Audit trail
+        "git": get_git_info(),
+        "environment": get_environment(),
     }
+    if document_checksums:
+        meta["document_checksums"] = document_checksums
+    if prompt_hashes:
+        meta["prompt_hashes"] = prompt_hashes
     (run_dir / "run_meta.json").write_text(
         json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8"
     )

@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Generiert die Extrakt-Dateien für A5 (Widerspruchserkennung).
+Generiert die Extrakt-Dateien für Power-User-Varianten.
+HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46
+© Gerald Pögl – Hunter-ID MemoryBlock BG FlexCo
+
 Einmal ausführen: python generate_extracts.py
-Erstellt: documents/extracts/EU_AI_ACT_Art4_extract.txt
-         documents/extracts/turing_framework_extract.txt
+Erstellt:
+  A5: documents/extracts/EU_AI_ACT_Art4_extract.txt
+      documents/extracts/turing_framework_extract.txt
+  A6: documents/extracts/EVN_GHB_2024-25_extract.txt
 """
 import pdfplumber
 from pathlib import Path
@@ -148,7 +153,106 @@ FRAMEWORK-KERN: Aktivitäten und Capabilities (Sections 3.1–3.2)
 (OUT / "turing_framework_extract.txt").write_text(turing_extract, encoding="utf-8")
 print(f"  -> {len(turing_extract.split())} Wörter")
 
+# === EVN GANZHEITSBERICHT EXTRAKT (A6) ===
+print("Extrahiere EVN Ganzheitsbericht...")
+with pdfplumber.open(DOCS / "EVN-GHB-2024-25_online.pdf") as pdf:
+    evn_pages = {}
+    for i, page in enumerate(pdf.pages):
+        t = page.extract_text()
+        if t:
+            evn_pages[i] = t
+
+def evn_page_range(start, end):
+    """Extract text from page range (1-indexed, inclusive)."""
+    return "\n\n".join([evn_pages.get(i - 1, "") for i in range(start, end + 1) if evn_pages.get(i - 1)])
+
+evn_extract = f"""EXTRAKT: EVN GANZHEITSBERICHT 2024/25 – Finanzanalytische Kernseiten
+====================================================================
+Quelle: EVN Ganzheitsbericht 2024/25
+Unternehmen: EVN AG, Maria Enzersdorf (Niederösterreich)
+Geschäftsjahr: 1. Oktober 2024 bis 30. September 2025
+Veröffentlicht: 2025 | 241 Seiten
+
+Hinweis: Dies ist ein Experten-Extrakt für die Finanzanalyse. Er enthält die
+Kennzahlen-Übersicht, Konzernlagebericht (Ertragslage, Bilanz, Wertanalyse,
+Cashflow), Segmentübersicht, Konzernabschluss (GuV, Bilanz, Cashflow) und
+den Ausblick. Der vollständige Bericht mit Nachhaltigkeitsbericht, Corporate
+Governance, ESG-Daten und Konzernanhang (241 Seiten) liegt dem Berater vor.
+
+============================================================
+KENNZAHLEN-ÜBERSICHT (Seite 6) – 3-Jahresvergleich
+============================================================
+
+{evn_page_range(6, 6)}
+
+============================================================
+AKTIE, AUSBLICK UND DIVIDENDENPOLITIK (Seite 8)
+============================================================
+
+{evn_page_range(8, 8)}
+
+============================================================
+KONZERNLAGEBERICHT: ERTRAGSLAGE (Seiten 129–130)
+============================================================
+
+{evn_page_range(129, 130)}
+
+============================================================
+KONZERNLAGEBERICHT: BILANZ UND WERTANALYSE (Seiten 131–132)
+============================================================
+
+{evn_page_range(131, 132)}
+
+============================================================
+KONZERNLAGEBERICHT: NETTOVERSCHULDUNG, GEARING UND CASHFLOW (Seiten 133–134)
+============================================================
+
+{evn_page_range(133, 134)}
+
+============================================================
+KONZERNLAGEBERICHT: AUSBLICK 2025/26 (Seite 142)
+============================================================
+
+{evn_page_range(142, 142)}
+
+============================================================
+SEGMENTBERICHT: ÜBERSICHT UND SEGMENT ENERGIE (Seiten 144–145)
+============================================================
+
+{evn_page_range(144, 145)}
+
+============================================================
+KONZERNABSCHLUSS: GEWINN-UND-VERLUST-RECHNUNG (Seite 157)
+============================================================
+
+{evn_page_range(157, 157)}
+
+============================================================
+KONZERNABSCHLUSS: BILANZ (Seite 158)
+============================================================
+
+{evn_page_range(158, 158)}
+
+============================================================
+KONZERNABSCHLUSS: EIGENKAPITALENTWICKLUNG (Seite 159)
+============================================================
+
+{evn_page_range(159, 159)}
+
+============================================================
+KONZERNABSCHLUSS: GELDFLUSSRECHNUNG (Seite 160)
+============================================================
+
+{evn_page_range(160, 160)}
+"""
+
+(OUT / "EVN_GHB_2024-25_extract.txt").write_text(evn_extract, encoding="utf-8")
+print(f"  -> {len(evn_extract.split())} Wörter")
+
+# === ZUSAMMENFASSUNG ===
 print(f"\nExtrakte erstellt in {OUT}/")
-print("Beide zusammen: ca. {0} Tokens".format(
-    int((len(eu_extract.split()) * 1.3 + len(turing_extract.split()) * 1.1))
-))
+a5_tokens = int(len(eu_extract.split()) * 1.3 + len(turing_extract.split()) * 1.1)
+a6_tokens = int(len(evn_extract.split()) * 1.3)
+print(f"A5 (EU + Turing): ca. {a5_tokens:,} Tokens")
+print(f"A6 (EVN):         ca. {a6_tokens:,} Tokens")
+print(f"Gesamt:           ca. {a5_tokens + a6_tokens:,} Tokens")

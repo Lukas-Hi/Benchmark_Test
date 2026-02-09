@@ -7,14 +7,18 @@ HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46
 Multi-Provider Benchmark-Runner (modular, v3.0)
 
 Usage:
-    python benchmark.py                  # Voller Durchlauf
-    python benchmark.py --runs 3         # Nur 3 Durchläufe
+    python benchmark.py                          # Voller Durchlauf
+    python benchmark.py --runs 3                 # Nur 3 Durchläufe
     python benchmark.py --models "Claude Opus 4.6,GPT-5.2"
     python benchmark.py --tasks A1,A3
-    python benchmark.py --dry-run        # Zeigt Konfiguration ohne API-Calls
+    python benchmark.py --providers anthropic,openai  # Nur Abo-Modelle
+    python benchmark.py --providers google        # Google separat nachholen
+    python benchmark.py --dry-run                 # Zeigt Konfiguration ohne API-Calls
 """
 
 import time
+import random
+import logging
 import asyncio
 import argparse
 import aiohttp
@@ -24,14 +28,17 @@ from models import (
     SingleResult, DOCS_DIR, OUTPUT_DIR, TEMPERATURE, MAX_TOKENS,
     MAX_CONCURRENT, REQUEST_DELAY, NUM_RUNS, OPENROUTER_KEY,
     log, build_user_content, aggregate_results,
+    hash_documents, hash_string,
 )
 from providers import (
     MODELS, PROVIDERS, KEY_MAP,
     resolve_provider, PROVIDER_CALLERS,
+    PROVIDER_CONCURRENCY, PROVIDER_DELAY,
 )
-from prompts import TASKS
+from prompts import TASKS, SYSTEM_PROMPT
 from output import (
-    save_single_responses, save_aggregated_csv, save_bewertung_template,
+    save_single_responses, save_prompt_archive, save_raw_responses,
+    save_aggregated_csv, save_bewertung_template,
     save_consistency_report, save_leaderboard, save_provider_summary,
     save_run_meta,
 )
@@ -42,7 +49,8 @@ from output import (
 # ============================================
 
 async def call_model(
-    session, model_name, model_cfg, task_id, task, run_number, semaphore,
+    session, model_name, model_cfg, task_id, task, run_number,
+    global_semaphore, provider_semaphores,
 ) -> SingleResult:
     """Send a benchmark request to the appropriate provider."""
 
@@ -56,6 +64,7 @@ async def call_model(
         model_name=model_name, model_id=model_id, provider=provider,
         task_id=task_id, task_title=task["title"],
         run_number=run_number, timestamp=timestamp, response="",
+        user_content=user_content, use_system_prompt=use_system,
     )
 
     if not api_key:
@@ -63,37 +72,43 @@ async def call_model(
         log.error(f"✗ {model_name}: {result.error}")
         return result
 
-    async with semaphore:
-        try:
-            log.info(f"▶ {model_name} [{provider}] × {task['title']} [Run {run_number}]")
-            start = time.monotonic()
+    prov_sem = provider_semaphores.get(provider, global_semaphore)
 
-            caller = PROVIDER_CALLERS[provider]
-            data, error = await caller(session, model_id, user_content, api_key, use_system)
-            result.latency_seconds = round(time.monotonic() - start, 2)
+    async with global_semaphore:
+        async with prov_sem:
+            try:
+                log.info(f"▶ {model_name} [{provider}] × {task['title']} [Run {run_number}]")
+                start = time.monotonic()
 
-            if error:
-                result.error = error
-                log.error(f"✗ {model_name} [Run {run_number}]: {error[:200]}")
-            else:
-                result.response = data["response"]
-                result.input_tokens = data["input_tokens"]
-                result.output_tokens = data["output_tokens"]
-                result.total_tokens = data["input_tokens"] + data["output_tokens"]
-                log.info(
-                    f"✓ {model_name} [Run {run_number}] "
-                    f"({result.latency_seconds}s, {result.total_tokens} tok)"
-                )
+                caller = PROVIDER_CALLERS[provider]
+                data, error = await caller(session, model_id, user_content, api_key, use_system)
+                result.latency_seconds = round(time.monotonic() - start, 2)
 
-        except asyncio.TimeoutError:
-            result.error = "Timeout (300s)"
-            log.error(f"✗ Timeout: {model_name} [Run {run_number}]")
-        except Exception as e:
-            result.error = str(e)
-            log.error(f"✗ {model_name} [Run {run_number}]: {e}")
+                if error:
+                    result.error = error
+                    log.error(f"✗ {model_name} [Run {run_number}]: {error[:200]}")
+                else:
+                    result.response = data["response"]
+                    result.input_tokens = data["input_tokens"]
+                    result.output_tokens = data["output_tokens"]
+                    result.total_tokens = data["input_tokens"] + data["output_tokens"]
+                    result.raw_response = data.get("raw_json", "")
+                    log.info(
+                        f"✓ {model_name} [Run {run_number}] "
+                        f"({result.latency_seconds}s, {result.total_tokens} tok)"
+                    )
 
-    # FIX: REQUEST_DELAY outside semaphore to not block other slots
-    await asyncio.sleep(REQUEST_DELAY)
+            except asyncio.TimeoutError:
+                result.error = "Timeout (300s)"
+                log.error(f"✗ Timeout: {model_name} [Run {run_number}]")
+            except Exception as e:
+                result.error = str(e)
+                log.error(f"✗ {model_name} [Run {run_number}]: {e}")
+
+    # Provider-specific delay with jitter (outside semaphores)
+    base_delay = PROVIDER_DELAY.get(provider, REQUEST_DELAY)
+    jitter = base_delay + random.uniform(0, base_delay * 0.5)
+    await asyncio.sleep(jitter)
 
     return result
 
@@ -174,14 +189,45 @@ async def run_benchmark(models, tasks, num_runs, dry_run=False):
     run_dir = OUTPUT_DIR / f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
+    # Execution log to file (audit trail)
+    file_handler = logging.FileHandler(run_dir / "execution.log", encoding="utf-8")
+    file_handler.setFormatter(logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
+    ))
+    log.addHandler(file_handler)
+
+    # Document checksums (audit trail)
+    all_doc_hashes: dict[str, str] = {}
+    for tid, t in tasks.items():
+        all_doc_hashes.update(hash_documents(t))
+    if all_doc_hashes:
+        log.info(f"\nDocument-Checksummen (SHA-256):")
+        for doc, h in all_doc_hashes.items():
+            log.info(f"  {doc}: {h[:16]}...")
+
+    # Prompt hashes (audit trail)
+    prompt_hashes = {"system_prompt": hash_string(SYSTEM_PROMPT)}
+    for tid, t in tasks.items():
+        content = build_user_content(t)
+        prompt_hashes[tid] = hash_string(content)
+
     for tid, t in tasks.items():
         for doc in t["docs"]:
             if not (DOCS_DIR / doc).exists():
                 log.warning(f"⚠ Dokument fehlt: {DOCS_DIR / doc} ({tid})")
 
-    semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+    global_semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+    provider_semaphores = {
+        prov: asyncio.Semaphore(limit)
+        for prov, limit in PROVIDER_CONCURRENCY.items()
+    }
     all_results: list[SingleResult] = []
     wall_start = time.monotonic()
+
+    log.info(f"\nRate-Limiting: Sequentiell (1 Request nach dem anderen)")
+    for prov in PROVIDER_CONCURRENCY:
+        delay = PROVIDER_DELAY.get(prov, REQUEST_DELAY)
+        log.info(f"  {prov}: {delay}s+ delay (mit Jitter)")
 
     async with aiohttp.ClientSession() as session:
         for run_num in range(1, num_runs + 1):
@@ -189,22 +235,26 @@ async def run_benchmark(models, tasks, num_runs, dry_run=False):
 
             for task_id, task in tasks.items():
                 log.info(f"\n── {task['title']} ({task_id}) ──")
-                coros = [
-                    call_model(session, name, cfg, task_id, task, run_num, semaphore)
-                    for name, cfg in models.items()
-                ]
-                all_results.extend(await asyncio.gather(*coros))
+                # Sequential execution: one request at a time
+                for name, cfg in models.items():
+                    result = await call_model(
+                        session, name, cfg, task_id, task, run_num,
+                        global_semaphore, provider_semaphores,
+                    )
+                    all_results.append(result)
 
     elapsed = time.monotonic() - wall_start
     agg = aggregate_results(all_results)
 
     save_single_responses(all_results, run_dir)
+    save_prompt_archive(all_results, run_dir, SYSTEM_PROMPT)
+    save_raw_responses(all_results, run_dir)
     save_aggregated_csv(agg, run_dir)
     save_bewertung_template(agg, run_dir)
     save_consistency_report(all_results, run_dir)
     save_leaderboard(agg, run_dir)
     save_provider_summary(all_results, run_dir)
-    save_run_meta(all_results, run_dir, elapsed)
+    save_run_meta(all_results, run_dir, elapsed, all_doc_hashes, prompt_hashes)
 
     ok = [r for r in all_results if not r.error]
     fail = [r for r in all_results if r.error]
@@ -218,19 +268,34 @@ async def run_benchmark(models, tasks, num_runs, dry_run=False):
             log.warning(f"  {r.model_name} [{r.provider}] × {r.task_title} "
                         f"[Run {r.run_number}]: {r.error}")
 
+    # Cleanup file handler
+    log.removeHandler(file_handler)
+    file_handler.close()
+
 
 def main():
     p = argparse.ArgumentParser(description="Entscheider-Benchmark v3.0 (Multi-Provider, modular)")
     p.add_argument("--runs", type=int, default=NUM_RUNS)
     p.add_argument("--models", type=str, default=None)
     p.add_argument("--tasks", type=str, default=None)
+    p.add_argument("--providers", type=str, default=None,
+                   help="Provider-Filter: anthropic,openai,google,openrouter")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
 
     models = MODELS
+    if args.providers:
+        sel = [p.strip().lower() for p in args.providers.split(",")]
+        models = {k: v for k, v in models.items() if v["provider"] in sel}
+        if not models:
+            log.error(f"Keine Modelle für Provider: {args.providers}")
+            log.error(f"Verfügbare Provider: anthropic, openai, google, openrouter")
+            return
+        log.info(f"Provider-Filter: {', '.join(sel)} → {len(models)} Modelle")
+
     if args.models:
         sel = [m.strip() for m in args.models.split(",")]
-        models = {k: v for k, v in MODELS.items() if k in sel}
+        models = {k: v for k, v in models.items() if k in sel}
         if not models:
             log.error(f"Verfügbar: {', '.join(MODELS.keys())}")
             return

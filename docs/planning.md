@@ -1,6 +1,6 @@
 # Planning: Entscheider-Benchmark
 **HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46**
-Stand: 6. Februar 2026
+Stand: 7. Februar 2026
 
 ---
 
@@ -41,7 +41,7 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 
 ### 2.3 Multi-Provider statt nur OpenRouter
 **Entscheidung:** Direkt-APIs für Abo-Modelle (Anthropic, OpenAI, Google), OpenRouter nur für Rest.
-**Begründung:** Gerald hat Pro/Max/Business-Abos. 13 von 18 Modellen laufen über Abos = keine Zusatzkosten. Nur 5 über OpenRouter. Geschätzte Ersparnis: 50–100 EUR pro Durchlauf.
+**Begründung:** Gerald hat Pro/Max/Business-Abos. 12 von 17 Modellen laufen über Abos = keine Zusatzkosten. Nur 5 über OpenRouter. Geschätzte Ersparnis: 50–100 EUR pro Durchlauf.
 **Verworfene Alternative:** Alles über OpenRouter (einfacher, aber teurer).
 
 ### 2.4 10 Runs bei Temperatur 0
@@ -50,7 +50,7 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 **Alternative:** 3 Runs (schneller, billiger, aber schwächere Statistik).
 
 ### 2.5 Modellauswahl
-**Entscheidung:** 18 Modelle in 4 Kategorien.
+**Entscheidung:** 17 Modelle in 4 Kategorien.
 **Begründung:** Frontier zeigt State of the Art, Mid-Tier zeigt Preis-Leistung, Coding-Modelle testen ob Spezialisierung bei Strategie schadet, Reasoning-Modelle testen ob explizites Denken hilft.
 
 | Kategorie | Modelle | Warum |
@@ -71,7 +71,8 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 | A2 | BCG AI Radar 2026 Executive Summary | ⬜ Zu beschaffen |
 | A5_N | Alan Turing Framework (88S.) + EU AI Act (144S.) – volle PDFs | ✓ Fertig |
 | A5_P | Kuratierte Extrakte (~2.5k Tokens) aus beiden Dokumenten | ✓ Fertig |
-| A6 | EVN Geschäftsbericht 2024/25 | ✓ Fertig |
+| A6_N | EVN Geschäftsbericht 2024/25 (241S., ~168k Tokens) – volles PDF | ✓ Fertig |
+| A6_P | EVN Finanz-Extrakt (~8.9k Tokens, 15 Kernseiten) | ✓ Fertig |
 
 ---
 
@@ -85,7 +86,7 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 - [x] CLAUDE.md, planning.md, specs.md, methodology.md, scoring_guide.md
 - [x] Logik-Check: Keine Fehler, 9 Warnungen dokumentiert
 - [x] Benchmark-Specs Skill erstellt (benchmark-specs.skill)
-- [x] Refactoring: Monolith (810Z) → 5 Module (benchmark.py 222Z, models.py 158Z, providers.py 329Z, output.py 181Z, prompts.py 313Z)
+- [x] Refactoring: Monolith (810Z) → 5 Module (benchmark.py 250Z, models.py 162Z, providers.py 335Z, output.py 182Z, prompts.py 336Z)
 - [x] Fixes: REQUEST_DELAY aus Semaphore verschoben, 1× Retry bei HTTP 429 eingebaut
 
 ### Phase 2: Quelldokumente ✓
@@ -103,6 +104,12 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 - [x] Skill `benchmark-specs` aktualisiert (Phase 2 DONE, Refactoring-Status, Verweis auf Evaluator)
 - [-] Statistik Austria / Microsoft Work Trend Index → nicht mehr benötigt (A5 umdesignt auf UK vs. EU Regulierung)
 - [x] A5 Dual-Input-Design: N-Variante nutzt volle PDFs (~108k Tokens), P-Variante nutzt kuratierte Extrakte (~4.4k Tokens)
+- [x] A6 Dual-Input-Design: N-Variante nutzt vollen EVN-Bericht (~168k Tokens), P-Variante nutzt Finanz-Extrakt (~8.9k Tokens, 15 Seiten aus 241)
+- [x] `generate_extracts.py` erweitert: Generiert jetzt A5-Extrakte (EU + Turing) UND A6-Extrakt (EVN)
+- [x] prompts.py A6_P auf Extrakt umgestellt, Prompt von "Quartalsbericht" auf "Geschäftsbericht" korrigiert
+- [x] Versionsnummern vereinheitlicht: output.py, merge_runs.py, providers.py von v2.0 auf v3.0
+- [x] CLAUDE.md Projektstruktur aktualisiert (fehlende Dateien, Zeilenzahlen, Modellanzahl 18→17)
+- [x] README.md ins Projektstamm kopiert (fehlte nach Klon)
 - [x] Retry auf 3 mit exponentiellem Backoff (10s/30s/90s), auch HTTP 503/529
 - [x] Dry-Run um Token-Schätzung und Kontextfenster-Warnungen erweitert
 - [x] Input-Tokens in AggregatedResult und aggregated_stats.csv aufgenommen
@@ -112,7 +119,8 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 - [x] `.env` mit API-Keys konfiguriert
 - [x] `python benchmark.py --dry-run` – Token-Schätzungen validiert:
   - A5_N: 128.350 Tokens (volle PDFs) – grenzwertig für 128k-Modelle
-  - A6_N/P: ~168k Tokens (voller EVN-Bericht) – überschreitet 128k-Modelle
+  - A6_N: ~168k Tokens (voller EVN-Bericht) – überschreitet 128k-Modelle
+  - A6_P: ~8.9k Tokens (Finanz-Extrakt) – GELÖST durch Dual-Input-Design
 - [x] Smoke Test: Claude Opus 4.6 × A1_N – erfolgreich (1.351 Tokens, 30s)
 - [x] System-Prompt-Test: Claude Opus 4.6 × A1_P – Fließtext, Deutsch, keine KI-Referenz ✓
 - [ ] o1 System-Prompt-Kompatibilität prüfen (wenn erste P-Ergebnisse vorliegen)
@@ -122,7 +130,7 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 - [ ] Ergebnisse prüfen: Antworten, Statistik, Fehler-Report
 
 ### Phase 4: Voller Durchlauf ⬜
-- [ ] `python benchmark.py` – 18 Modelle × 12 Aufgaben × 10 Runs
+- [ ] `python benchmark.py` – 17 Modelle × 12 Aufgaben × 10 Runs
 - [ ] Laufzeit und Kosten dokumentieren
 - [ ] Konsistenz-Report prüfen (CV < 15% für alle Modelle)
 - [ ] Provider-Summary prüfen (Direkt vs. OpenRouter)
@@ -144,7 +152,7 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 
 ## 4. Offene Fragen
 
-1. **Quartalsbericht:** Welches Unternehmen? Immofinanz passt zur Zielgruppe (Immobilien), Verbund wäre breiter.
+1. ~~**Quartalsbericht:** Welches Unternehmen?~~ → ENTSCHIEDEN: EVN Ganzheitsbericht 2024/25 (241 Seiten, börsennotierter Energieversorger NÖ)
 2. **LLM-as-Judge:** Automatisierte Ersteinschätzung als Vorfilter vor manueller Bewertung? Oder rein manuell?
 3. **N-Variante Bewertung:** Gleiche Kriterien und Gewichtung für N und P? Oder separate Bewertung?
 4. **GPT-5.3-Codex:** Wann API über OpenRouter verfügbar? Manueller Test reicht erstmal.
@@ -159,5 +167,5 @@ Der Benchmark dient gleichzeitig als Content-Instrument (LinkedIn) und als öffe
 | Nur OpenRouter | Teurer, Gerald hat bereits Abos |
 | Nur 1 Run pro Modell | Statistisch zu schwach, keine Varianz-Messung |
 | Automatische Bewertung (LLM-as-Judge) | Zu unsicher bei nuancierten Strategieantworten, offen als Ergänzung |
-| 30+ Modelle | Diminishing Returns, die wichtigsten 18 decken den Markt ab |
+| 30+ Modelle | Diminishing Returns, die wichtigsten 17 decken den Markt ab |
 | Temperatur > 0 | Nicht reproduzierbar, macht Multi-Run-Vergleich schwieriger |

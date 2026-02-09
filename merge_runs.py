@@ -202,7 +202,7 @@ def merge_runs(run_dirs: list[Path]) -> None:
             source_metas.append(json.loads(meta_file.read_text(encoding="utf-8")))
 
     merge_meta = {
-        "benchmark": "Entscheider-Benchmark v2.0",
+        "benchmark": "Entscheider-Benchmark v3.0",
         "hid": "HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46",
         "type": "merged",
         "timestamp": datetime.now(timezone.utc).isoformat(),

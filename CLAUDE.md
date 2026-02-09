@@ -8,7 +8,7 @@ Misst, wie gut LLMs bei realen Führungsaufgaben performen – nicht bei Mathe o
 
 ## Was dieses Projekt ist
 
-Ein Benchmark-Runner der 18 LLMs gegen 6 strategische Aufgaben testet, jeweils in zwei Varianten:
+Ein Benchmark-Runner der 17 LLMs gegen 6 strategische Aufgaben testet, jeweils in zwei Varianten:
 - **N (Normal-User):** Prompt wie ein GF ihn tippen würde – kein System-Prompt, keine Struktur
 - **P (Power-User):** Optimierter Prompt mit System-Prompt, Guardrails, expliziten Anforderungen
 
@@ -19,16 +19,19 @@ Das Delta zwischen N und P pro Modell ist die eigentliche Messgröße: Wie viel 
 ```
 Benchmark_Test/
 ├── CLAUDE.md              ← Du bist hier. Lies das zuerst.
-├── benchmark.py           ← Orchestrator: CLI, Main-Loop, call_model (222 Zeilen)
-├── models.py              ← Datenklassen, Config, Hilfsfunktionen (158 Zeilen)
-├── providers.py           ← 4 API-Caller, MODELS-Dict, Routing + Retry (329 Zeilen)
-├── output.py              ← Alle save_*-Funktionen (181 Zeilen)
-├── prompts.py             ← System-Prompt + 12 Aufgaben (313 Zeilen)
+├── benchmark.py           ← Orchestrator: CLI, Main-Loop, call_model (250 Zeilen)
+├── models.py              ← Datenklassen, Config, Hilfsfunktionen (162 Zeilen)
+├── providers.py           ← 4 API-Caller, MODELS-Dict, Routing + Retry (335 Zeilen)
+├── output.py              ← Alle save_*-Funktionen (182 Zeilen)
+├── prompts.py             ← System-Prompt + 12 Aufgaben (336 Zeilen)
+├── generate_extracts.py   ← PDF-Extraktion für A5 + A6 Power-User-Varianten (258 Zeilen)
+├── merge_runs.py          ← Merge mehrerer Run-Verzeichnisse (245 Zeilen)
 ├── .env                   ← API-Keys (NICHT committen)
 ├── .env.example           ← Template für .env
 ├── requirements.txt       ← Python-Abhängigkeiten
 ├── .gitignore
 ├── README.md              ← Öffentliche Dokumentation für GitHub
+├── HUNTER_ID_STATUS.md    ← Projektstatus und Phasen-Tracking
 ├── docs/                  ← Interne Projektdokumentation
 │   ├── planning.md        ← Entscheidungslog und Roadmap
 │   ├── specs.md           ← Technische Spezifikation
@@ -36,13 +39,11 @@ Benchmark_Test/
 │   └── scoring_guide.md   ← Anleitung für manuelle Bewertung
 ├── documents/
 │   ├── pdf_files/         ← Volle PDFs (BCG, Turing, EU AI Act, EVN)
-│   ├── extracts/          ← Kuratierte Auszüge für A5_P (Chunk-Strategie)
+│   ├── extracts/          ← Kuratierte Auszüge für A5_P und A6_P (Chunk-Strategie)
 │   └── md_files/          ← Markdown-Versionen
-├── skills/benchmark-specs/ ← Entpackter Skill (SKILL.md, references/)
-│   ├── bcg_ai_radar_2026.pdf
-│   ├── statistik_austria_ict_2025.pdf
-│   ├── microsoft_work_trend_index_2025.pdf
-│   └── quartalsbericht.pdf
+├── skills/
+│   ├── benchmark-specs/   ← Projekt-Skill (SKILL.md, references/)
+│   └── benchmark-evaluator/ ← Evaluator-Skill (Scoring, Methodik)
 └── results/               ← Wird vom Runner erstellt (gitignored)
     └── run_YYYYMMDD_HHMMSS/
 ```

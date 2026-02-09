@@ -6,9 +6,10 @@ HID-LINKEDIN-BENCHMARK-2026-02-06-ACTIVE-C4E8A1-CLO46
 """
 
 import os
+import hashlib
 import logging
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from statistics import mean, stdev
 from dotenv import load_dotenv
 
@@ -59,6 +60,10 @@ class SingleResult:
     total_tokens: int = 0
     latency_seconds: float = 0.0
     error: str = ""
+    # Audit trail fields
+    raw_response: str = ""          # Full JSON from API
+    user_content: str = ""          # Exact prompt sent
+    use_system_prompt: bool = False  # Whether system prompt was used
 
 
 @dataclass
@@ -117,6 +122,21 @@ def build_user_content(task: dict) -> str:
         parts.append(f"--- DOKUMENT: {doc_file} ---\n\n{doc_text}\n\n--- ENDE DOKUMENT ---")
     parts.append(task["prompt"])
     return "\n\n".join(parts)
+
+
+def hash_documents(task: dict) -> dict[str, str]:
+    """Calculate SHA-256 for each document used in a task."""
+    hashes = {}
+    for doc_file in task["docs"]:
+        filepath = DOCS_DIR / doc_file
+        if filepath.exists():
+            hashes[doc_file] = hashlib.sha256(filepath.read_bytes()).hexdigest()
+    return hashes
+
+
+def hash_string(text: str) -> str:
+    """SHA-256 hash of a string."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def calc_stats(values: list[float]) -> dict:

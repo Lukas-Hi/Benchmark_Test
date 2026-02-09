@@ -314,20 +314,20 @@ Erfinde keine Inhalte, die nicht in den Dokumenten stehen. Wenn ein Dokument ein
         "title": "Zahlenanalyse (Power)",
         "variant": "P",
         "category": "Finanzanalyse und datengestützte Strategiebewertung",
-        "docs": ["pdf_files/EVN-GHB-2024-25_online.pdf"],
+        "docs": ["extracts/EVN_GHB_2024-25_extract.txt"],
         "measures": ["Präzision", "Substanz", "Urteilskraft"],
         "use_system_prompt": True,
         "prompt": """KONTEXT:
-Du berätst einen Investor, der eine mögliche Beteiligung an dem Unternehmen prüft, dessen Quartalsbericht oben beigefügt ist. Der Investor ist kein Finanzanalyst, aber geschäftserfahren. Er will eine fundierte Einschätzung, keine Bilanz-Nacherzählung.
+Du berätst einen Investor, der eine mögliche Beteiligung an dem Unternehmen prüft, dessen Geschäftsbericht oben als Experten-Extrakt beigefügt ist. Der Extrakt enthält die finanzanalytisch relevanten Seiten (Kennzahlen, Konzernlagebericht, Konzernabschluss, Ausblick). Der Investor ist kein Finanzanalyst, aber geschäftserfahren. Er will eine fundierte Einschätzung, keine Bilanz-Nacherzählung.
 
 DEIN AUFTRAG:
-Analysiere den Quartalsbericht. Konkret:
+Analysiere den Geschäftsbericht. Konkret:
 
-Erstens: Wie hat sich das Unternehmen im Vergleich zum Vorjahresquartal entwickelt? Nenne die zentralen Veränderungen bei Umsatz, Ergebnis, Margen und relevanten Bilanzkennzahlen. Berechne Veränderungsraten, wo die Daten das erlauben. Gib die konkreten Zahlen an – keine vagen Formulierungen wie „leicht gestiegen".
+Erstens: Wie hat sich das Unternehmen im Vergleich zum Vorjahr entwickelt? Nenne die zentralen Veränderungen bei Umsatz, Ergebnis, Margen und relevanten Bilanzkennzahlen. Berechne Veränderungsraten, wo die Daten das erlauben. Gib die konkreten Zahlen an – keine vagen Formulierungen wie „leicht gestiegen".
 
 Zweitens: Welche Kennzahlen sind positiv und sprechen für eine Beteiligung? Welche geben Anlass zur Vorsicht oder sind Warnsignale? Trenne das klar.
 
-Drittens: Gibt es Auffälligkeiten, die bei oberflächlicher Betrachtung leicht übersehen werden? Dazu gehören: ungewöhnliche Verschiebungen zwischen Quartalen, Einmaleffekte die das Ergebnis verzerren, steigende Verbindlichkeiten bei stagnierendem Umsatz, Diskrepanzen zwischen operativem Ergebnis und Cashflow, Veränderungen in der Bilanzstruktur.
+Drittens: Gibt es Auffälligkeiten, die bei oberflächlicher Betrachtung leicht übersehen werden? Dazu gehören: ungewöhnliche Verschiebungen zwischen Geschäftsjahren, Einmaleffekte die das Ergebnis verzerren, steigende Verbindlichkeiten bei stagnierendem Umsatz, Diskrepanzen zwischen operativem Ergebnis und Cashflow, Veränderungen in der Bilanzstruktur.
 
 Viertens: Was ist dein Gesamturteil? Würdest du dem Investor empfehlen, die Prüfung zu vertiefen, oder siehst du Gründe für Zurückhaltung? Begründe das.
 
