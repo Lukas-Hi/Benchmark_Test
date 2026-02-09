@@ -1,5 +1,7 @@
 # Entscheider-Benchmark
 
+
+
 **Wie gut unterstützen KI-Modelle strategische Geschäftsentscheidungen?**
 
 Ein praxisnaher Benchmark für Führungskräfte im DACH-Raum. Keine Quizfragen, keine Coding-Aufgaben – stattdessen sechs Szenarien, die jeder Geschäftsführer kennt.
@@ -124,6 +126,7 @@ Bei Temperatur 0 sollten die Antworten nahezu identisch sein. Wenn sie es nicht 
 **Bewertung ist manuell.** Automatisierte LLM-Bewertung (LLM-as-a-Judge) erreicht nur ~66% Übereinstimmung mit menschlichen Experten bei komplexen Aufgaben (GDPval-Studie, OpenAI 2025). Für strategische Qualität ist menschliche Bewertung nach wie vor der Goldstandard.
 
 ## Mitmachen
+Zwischenergebnis: https://github.com/Lukas-Hi/Benchmark_Test/blob/main/results/run_20260207_144751/DETAILREICHEN_pitch.html
 
 Jeder kann diesen Benchmark mit eigenen Modellen oder eigener Bewertung durchführen.
 
